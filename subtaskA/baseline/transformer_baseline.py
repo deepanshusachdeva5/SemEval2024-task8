@@ -9,6 +9,10 @@ from scipy.special import softmax
 import argparse
 import logging
 
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print("=================================Using device==============================================:", device)
+
 def preprocess_function(examples, **fn_kwargs):
     return fn_kwargs['tokenizer'](examples["text"], truncation=True)
 
@@ -45,10 +49,11 @@ def fine_tune(train_df, valid_df, checkpoints_path, id2label, label2id, model):
     valid_dataset = Dataset.from_pandas(valid_df)
     
     # get tokenizer and model from huggingface
-    tokenizer = AutoTokenizer.from_pretrained(model)     # put your model here
     model = AutoModelForSequenceClassification.from_pretrained(
-       model, num_labels=len(label2id), id2label=id2label, label2id=label2id    # put your model here
+       model, num_labels=len(label2id), id2label=id2label, label2id=label2id,device=device   # put your model here
     )
+    tokenizer = AutoTokenizer.from_pretrained(model,use_fast=True, device=device)     # put your model here
+
     
     # tokenize data for train/valid
     tokenized_train_dataset = train_dataset.map(preprocess_function, batched=True, fn_kwargs={'tokenizer': tokenizer})
